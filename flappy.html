@@ -21,6 +21,80 @@
 <body>
   <canvas id="gameCanvas" width="320" height="480"></canvas>
   <script>
+
+    // Flappy Bird game
+const flappyCanvas = document.getElementById("flappyCanvas");
+const flappyCtx = flappyCanvas.getContext("2d");
+
+let flappyFrames = 0;
+const bird = { x:50, y:150, w:34, h:26, gravity:0.25, jump:4.6, speed:0 };
+const pipes = [];
+const pipeWidth = 52;
+const pipeGap = 100;
+
+function spawnPipe(){
+  const topHeight = Math.floor(Math.random()*200)+50;
+  pipes.push({ x: flappyCanvas.width, top: topHeight, bottom: topHeight+pipeGap });
+}
+
+function drawBird(){
+  flappyCtx.fillStyle = "yellow";
+  flappyCtx.fillRect(bird.x, bird.y, bird.w, bird.h);
+}
+function updateBird(){
+  bird.speed += bird.gravity;
+  bird.y += bird.speed;
+  if(bird.y+bird.h >= flappyCanvas.height){
+    bird.y = flappyCanvas.height-bird.h;
+    bird.speed = 0;
+  }
+}
+function drawPipes(){
+  flappyCtx.fillStyle = "green";
+  pipes.forEach(pipe=>{
+    flappyCtx.fillRect(pipe.x,0,pipeWidth,pipe.top);
+    flappyCtx.fillRect(pipe.x,pipe.bottom,pipeWidth,flappyCanvas.height-pipe.bottom);
+  });
+}
+function updatePipes(){
+  pipes.forEach(pipe=>pipe.x--);
+  if(flappyFrames%120===0) spawnPipe();
+  pipes.forEach((pipe,i)=>{ if(pipe.x+pipeWidth<0) pipes.splice(i,1); });
+}
+function checkCollision(){
+  for(let pipe of pipes){
+    if(bird.x < pipe.x+pipeWidth && bird.x+bird.w > pipe.x &&
+       (bird.y < pipe.top || bird.y+bird.h > pipe.bottom)){
+      return true;
+    }
+  }
+  return false;
+}
+
+document.addEventListener("keydown", e=>{
+  if(e.code==="Space" && views.flappy.classList.contains("active")){
+    bird.speed = -bird.jump;
+  }
+});
+
+function flappyLoop(){
+  if(!views.flappy.classList.contains("active")) { requestAnimationFrame(flappyLoop); return; }
+  flappyCtx.clearRect(0,0,flappyCanvas.width,flappyCanvas.height);
+  updateBird();
+  updatePipes();
+  drawBird();
+  drawPipes();
+  if(checkCollision()){
+    flappyCtx.fillStyle="red";
+    flappyCtx.font="30px Arial";
+    flappyCtx.fillText("Game Over",80,240);
+    return;
+  }
+  flappyFrames++;
+  requestAnimationFrame(flappyLoop);
+}
+flappyLoop();
+    
     const canvas = document.getElementById("gameCanvas");
     const ctx = canvas.getContext("2d");
 
