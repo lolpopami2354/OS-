@@ -270,10 +270,6 @@
             <div class="icon">💡</div>
             <div class="label">About</div>
           </div>
-          <div class="folder" data-url="flappy.html">
-            <div class="icon">🐦</div>
-            <div class="label">Flappy Bird</div>
-          </div>
 
           <div class="side-title">Bookmarks</div>
           <div class="folder" data-url="https://example.com">
@@ -298,6 +294,7 @@
               <button class="tab active" data-tab="browser">Browser</button>
               <button class="tab" data-tab="notes">Notes</button>
               <button class="tab" data-tab="about">About</button>
+              <button class="tab" data-tab="flappy">Flappy Bird</button>
             </div>
           </div>
 
@@ -329,8 +326,17 @@
             <div class="notes-list" id="notesList"></div>
           </section>
 
+          
+          <!-- Flappy Bird view -->
+          <section class="flappy-view" id="flappyView">
+            <canvas id="flappyCanvas" width="320" height="480"
+            style="background:#70c5ce; display:block; margin:auto; border:2px solid #333;"></canvas>
+          </section>
+
           <!-- About view -->
+          
           <section class="about-view" id="aboutView">
+            
             <div class="about-box">
               <h2 style="margin: 0 0 8px;">About this computer</h2>
               <p>This is a simulated computer UI built with HTML, CSS, and JavaScript. The mini browser uses an iframe to load pages.</p>
