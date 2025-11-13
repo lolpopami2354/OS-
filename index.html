@@ -110,6 +110,28 @@
       frame.src = full;
     }
 
+    function toggleFullscreen(el) {
+  if (!document.fullscreenElement) {
+    el.requestFullscreen().catch(err => {
+      console.error(`Error attempting fullscreen: ${err.message}`);
+    });
+  } else {
+    document.exitFullscreen();
+  }
+}
+
+// Browser fullscreen
+document.getElementById('browserFullscreen')
+  .addEventListener('click', () => toggleFullscreen(document.getElementById('browserFrame')));
+
+// Flappy Bird fullscreen
+document.getElementById('flappyFullscreen')
+  .addEventListener('click', () => toggleFullscreen(document.getElementById('flappyCanvas')));
+
+// Snake fullscreen
+document.getElementById('snakeFullscreen')
+  .addEventListener('click', () => toggleFullscreen(document.getElementById('snakeCanvas')));
+
     goBtn.addEventListener('click', () => navigate(urlInput.value.trim()));
     urlInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') navigate(urlInput.value.trim());
