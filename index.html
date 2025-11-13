@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>HTML Computer with Mini Browser</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    :root {
+      --bg: #0f1221;
+      --panel: #181b2e;
+      --panel-2: #1f2440;
+      --accent: #4f7fff;
+      --accent-2: #62e0a1;
+      --text: #e8ecf8;
+      --muted: #a5adca;
+      --danger: #ff5d5d;
+      --shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+      --radius: 14px;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      background: radial-gradient(1200px 600px at 70% 20%, #141733, #0b0d1a);
+      color: var(--text);
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+      overflow: hidden;
+    }
+
+    /* Computer frame */
+    .desk-wrap {
+      display: grid;
+      place-items: center;
+      height: 100%;
+      padding: 24px;
+    }
+    .computer {
+      width: min(1000px, 92vw);
+      background: linear-gradient(180deg, #0c0f21 0%, #12152b 100%);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      border: 1px solid #23274b;
+      display: grid;
+      grid-template-rows: 56px 1fr 64px;
+      position: relative;
+    }
+
+    /* Top bar */
+    .topbar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 14px;
+      background: linear-gradient(180deg, #1c2144, #171b34);
+      border-top-left-radius: var(--radius);
+      border-top-right-radius: var(--radius);
+      border-bottom: 1px solid #262a50;
+    }
+    .leds {
+      display: flex; gap: 8px; margin-right: 8px;
+    }
+    .led { width: 12px; height: 12px; border-radius: 50%; }
+    .led.red { background: #ff7b7b; }
+    .led.yellow { background: #ffd56a; }
+    .led.green { background: #6ae68e; }
+    .title {
+      font-weight: 600; letter-spacing: 0.2px; color: var(--muted);
+    }
+    .power-btn {
+      margin-left: auto;
+      background: var(--danger); color: #fff; border: none;
+      padding: 8px 12px; border-radius: 10px; cursor: pointer;
+      font-weight: 600;
+    }
+
+    /* Screen area split */
+    .screen {
+      display: grid;
+      grid-template-columns: 260px 1fr;
+      gap: 12px;
+      padding: 12px;
+      background: linear-gradient(160deg, #131639, #0e1127 60%, #0a0c1f);
+    }
+
+    /* Sidebar (file explorer) */
+    .sidebar {
+      background: var(--panel);
+      border: 1px solid #252a56;
+      border-radius: 12px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      box-shadow: inset 0 2px 10px rgba(0,0,0,0.35);
+    }
+    .side-title {
+      font-size: 14px; color: var(--muted); font-weight: 700;
+      margin-bottom: 6px;
+    }
+    .folder {
+      background: var(--panel-2);
+      border: 1px solid #2a2f61;
+      border-radius: 10px;
+      padding: 10px;
+      display: flex; align-items: center; gap: 10px;
+      cursor: pointer;
+      transition: transform .08s ease, background .2s ease;
+    }
+    .folder:hover { transform: translateY(-1px); background: #242a52; }
+    .folder .icon {
+      width: 28px; height: 28px; border-radius: 6px;
+      background: linear-gradient(180deg, #5b6eff, #3b4bd6);
+      display: grid; place-items: center; font-weight: 900;
+      color: #ffffff;
+    }
+    .folder .label { font-weight: 600; }
+
+    /* Main window area */
+    .window {
+      background: var(--panel);
+      border: 1px solid #252a56;
+      border-radius: 12px;
+      display: grid;
+      grid-template-rows: 44px 1fr;
+      overflow: hidden;
+      box-shadow: inset 0 2px 10px rgba(0,0,0,0.35);
+    }
+    .winbar {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 10px;
+      background: linear-gradient(180deg, #22264a, #1a1e3b);
+      border-bottom: 1px solid #2a2f61;
+    }
+    .win-title {
+      font-weight: 700; font-size: 14px; color: var(--muted);
+    }
+
+    /* Tabs (Browser / Notes / About) */
+    .tabs {
+      margin-left: auto; display: flex; gap: 6px;
+    }
+    .tab {
+      border: 1px solid #2a2f61; color: var(--muted);
+      background: #1b1f3d; border-radius: 8px; padding: 6px 10px;
+      cursor: pointer; font-weight: 600;
+    }
+    .tab.active { background: #2a305e; color: #cfe2ff; }
+
+    /* Browser chrome */
+    .browser-bar {
+      display: flex; gap: 8px; align-items: center;
+      padding: 8px; border-bottom: 1px solid #2a2f61;
+      background: #16193a;
+    }
+    .btn {
+      background: #2a3060; color: #dfe7ff; border: 1px solid #394082;
+      padding: 6px 10px; border-radius: 8px; cursor: pointer;
+      font-weight: 700; transition: filter .1s ease;
+    }
+    .btn:hover { filter: brightness(1.15); }
+    .input {
+      flex: 1; background: #0f1230; color: #eaf0ff;
+      border: 1px solid #394082; border-radius: 10px; padding: 8px 10px;
+      font-weight: 600;
+    }
+    .secure-hint {
+      font-size: 12px; color: var(--muted);
+    }
+
+    /* Browser content */
+    .browser-view, .notes-view, .about-view {
+      height: 100%; display: none;
+    }
+    .browser-view.active,
+    .notes-view.active,
+    .about-view.active {
+      display: grid; grid-template-rows: auto 1fr;
+      height: 100%;
+    }
+    .iframe-wrap {
+      height: 100%; background: #0d1030;
+    }
+    iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      background: #0d1030;
+    }
+
+    /* Notes app */
+    .notes-bar {
+      padding: 8px; border-bottom: 1px solid #2a2f61; background: #16193a;
+      display: flex; gap: 8px; align-items: center;
+    }
+    .note-input {
+      flex: 1; background: #0f1230; color: #eaf0ff;
+      border: 1px solid #394082; border-radius: 10px; padding: 8px 10px;
+      font-weight: 600;
+    }
+    .notes-list {
+      padding: 10px; display: grid; gap: 10px; overflow: auto;
+    }
+    .note-item {
+      background: #1b1f3d; border: 1px solid #2a2f61; border-radius: 10px;
+      padding: 10px; display: flex; justify-content: space-between; align-items: center;
+    }
+
+    /* About view */
+    .about-box {
+      padding: 16px; color: #cfe2ff; line-height: 1.5; overflow: auto;
+    }
+
+    /* Taskbar */
+    .taskbar {
+      background: linear-gradient(180deg, #1c2144, #171b34);
+      border-bottom-left-radius: var(--radius);
+      border-bottom-right-radius: var(--radius);
+      border-top: 1px solid #262a50;
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 14px;
+    }
+    .start {
+      background: linear-gradient(180deg, #58dd9b, #2aa56b);
+      color: #0a0f21; border: none; padding: 10px 14px;
+      border-radius: 10px; font-weight: 900; cursor: pointer;
+    }
+    .task {
+      background: #22264a; color: #cfe2ff; border: 1px solid #2a2f61;
+      padding: 8px 10px; border-radius: 10px; font-weight: 700;
+      cursor: pointer;
+    }
+    .clock {
+      margin-left: auto; color: var(--muted); font-weight: 700;
+    }
+
+    /* Small screens */
+    @media (max-width: 720px) {
+      .screen { grid-template-columns: 1fr; }
+      .sidebar { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="desk-wrap">
+    <div class="computer" id="pc">
+      <div class="topbar">
+        <div class="leds">
+          <div class="led red"></div>
+          <div class="led yellow"></div>
+          <div class="led green"></div>
+        </div>
+        <div class="title">CopilotOS – Simulated Computer</div>
+        <button class="power-btn" id="powerBtn" title="Toggle screen">Power</button>
+      </div>
+
+      <div class="screen">
+        <!-- Sidebar / File Explorer -->
+        <aside class="sidebar">
+          <div class="side-title">Quick access</div>
+          <div class="folder" data-open="browser">
+            <div class="icon">🌐</div>
+            <div class="label">Browser</div>
+          </div>
+          <div class="folder" data-open="notes">
+            <div class="icon">📝</div>
+            <div class="label">Notes</div>
+          </div>
+          <div class="folder" data-open="about">
+            <div class="icon">💡</div>
+            <div class="label">About</div>
+          </div>
+
+          <div class="side-title">Bookmarks</div>
+          <div class="folder" data-url="https://example.com">
+            <div class="icon">★</div>
+            <div class="label">Example</div>
+          </div>
+          <div class="folder" data-url="https://developer.mozilla.org/">
+            <div class="icon">★</div>
+            <div class="label">MDN</div>
+          </div>
+          <div class="folder" data-url="https://wikipedia.org">
+            <div class="icon">★</div>
+            <div class="label">Wikipedia</div>
+          </div>
+        </aside>
+
+        <!-- Main window -->
+        <main class="window">
+          <div class="winbar">
+            <div class="win-title">Window</div>
+            <div class="tabs">
+              <button class="tab active" data-tab="browser">Browser</button>
+              <button class="tab" data-tab="notes">Notes</button>
+              <button class="tab" data-tab="about">About</button>
+            </div>
+          </div>
+
+          <!-- Browser view -->
+          <section class="browser-view active" id="browserView">
+            <div class="browser-bar">
+              <button class="btn" id="backBtn" title="Back">⟵</button>
+              <button class="btn" id="forwardBtn" title="Forward">⟶</button>
+              <button class="btn" id="reloadBtn" title="Reload">⟳</button>
+              <button class="btn" id="homeBtn" title="Home">⌂</button>
+              <input class="input" id="urlInput" placeholder="Enter a URL (https://...)" />
+              <button class="btn" id="goBtn" title="Go">Go</button>
+            </div>
+            <div class="iframe-wrap">
+              <iframe id="webFrame" src="https://example.com" referrerpolicy="no-referrer"></iframe>
+            </div>
+            <div class="secure-hint" style="padding: 8px; border-top: 1px solid #2a2f61;">
+              Note: Some sites block embedding in iframes. If a page doesn’t load, try another site or open it directly in your browser.
+            </div>
+          </section>
+
+          <!-- Notes view -->
+          <section class="notes-view" id="notesView">
+            <div class="notes-bar">
+              <input class="note-input" id="noteInput" placeholder="Write a note..." />
+              <button class="btn" id="addNote">Add</button>
+              <button class="btn" id="clearNotes">Clear</button>
+            </div>
+            <div class="notes-list" id="notesList"></div>
+          </section>
+
+          <!-- About view -->
+          <section class="about-view" id="aboutView">
+            <div class="about-box">
+              <h2 style="margin: 0 0 8px;">About this computer</h2>
+              <p>This is a simulated computer UI built with HTML, CSS, and JavaScript. The mini browser uses an iframe to load pages.</p>
+              <p>Back/Forward uses a local history stack. Some websites use headers like X-Frame-Options or Content-Security-Policy to prevent embedding, so they may not display here.</p>
+              <p>Try the sidebar bookmarks, add notes, and switch tabs. You can tweak the theme in the CSS variables at the top.</p>
+            </div>
+          </section>
+        </main>
+      </div>
+
+      <!-- Taskbar -->
+      <div class="taskbar">
+        <button class="start" id="startBtn">Start</button>
+        <button class="task" data-open="browser">Browser</button>
+        <button class="task" data-open="notes">Notes</button>
+        <button class="task" data-open="about">About</button>
+        <div class="clock" id="clock"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Elements
+    const pc = document.getElementById('pc');
+    const powerBtn = document.getElementById('powerBtn');
+    const tabs = [...document.querySelectorAll('.tab')];
+    const views = {
+      browser: document.getElementById('browserView'),
+      notes: document.getElementById('notesView'),
+      about: document.getElementById('aboutView'),
+    };
+
+    // Browser controls
+    const urlInput = document.getElementById('urlInput');
+    const goBtn = document.getElementById('goBtn');
+    const backBtn = document.getElementById('backBtn');
+    const forwardBtn = document.getElementById('forwardBtn');
+    const reloadBtn = document.getElementById('reloadBtn');
+    const homeBtn = document.getElementById('homeBtn');
+    const webFrame = document.getElementById('webFrame');
+
+    // Notes
+    const noteInput = document.getElementById('noteInput');
+    const addNote = document.getElementById('addNote');
+    const clearNotes = document.getElementById('clearNotes');
+    const notesList = document.getElementById('notesList');
+
+    // Sidebar and taskbar links
+    const folders = [...document.querySelectorAll('.folder')];
+    const taskBtns = [...document.querySelectorAll('.task')];
+
+    // Clock
+    const clock = document.getElementById('clock');
+    function updateClock() {
+      const d = new Date();
+      const h = d.getHours().toString().padStart(2,'0');
+      const m = d.getMinutes().toString().padStart(2,'0');
+      clock.textContent = `${h}:${m}`;
+    }
+    updateClock();
+    setInterval(updateClock, 15000);
+
+    // Power toggle (simulate screen on/off)
+    let poweredOn = true;
+    powerBtn.addEventListener('click', () => {
+      poweredOn = !poweredOn;
+      pc.style.filter = poweredOn ? 'none' : 'brightness(0.12) grayscale(0.8)';
+      pc.style.pointerEvents = poweredOn ? 'auto' : 'none';
+      // keep the power button clickable
+      powerBtn.style.pointerEvents = 'auto';
+    });
+
+    // Tabs switching
+    function showView(name) {
+      for (const v in views) views[v].classList.remove('active');
+      views[name].classList.add('active');
+      tabs.forEach(t => t.classList.toggle('active', t.dataset.tab === name));
+    }
+    tabs.forEach(t => t.addEventListener('click', () => showView(t.dataset.tab)));
+
+    // Taskbar and sidebar openers
+    function openByAttr(name) {
+      if (name === 'browser') showView('browser');
+      if (name === 'notes') showView('notes');
+      if (name === 'about') showView('about');
+    }
+    taskBtns.forEach(b => b.addEventListener('click', () => openByAttr(b.dataset.open)));
+    folders.forEach(f => {
+      f.addEventListener('click', () => {
+        const open = f.dataset.open;
+        const url = f.dataset.url;
+        if (open) openByAttr(open);
+        if (url) navigate(url);
+      });
+    });
+
+    // Browser history management
+    const historyStack = [];
+    let currentIndex = -1;
+    const HOME = 'https://example.com';
+
+    function sanitizeUrl(url) {
+      try {
+        // add protocol if missing
+        if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+        const u = new URL(url);
+        return u.href;
+      } catch {
+        return null;
+      }
+    }
+
+    function updateNavButtons() {
+      backBtn.disabled = currentIndex <= 0;
+      forwardBtn.disabled = currentIndex >= historyStack.length - 1;
+    }
+
+    function navigate(url) {
+      const safe = sanitizeUrl(url);
+      if (!safe) {
+        urlInput.value = '';
+        urlInput.placeholder = 'Invalid URL';
+        return;
+      }
+      // If we're not at the end of history, truncate forward history
+      historyStack.splice(currentIndex + 1);
+      historyStack.push(safe);
+      currentIndex = historyStack.length - 1;
+      webFrame.src = safe;
+      urlInput.value = safe;
+      updateNavButtons();
+    }
+
+    goBtn.addEventListener('click', () => navigate(urlInput.value.trim()));
+    urlInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') navigate(urlInput.value.trim());
+    });
+
+    backBtn.addEventListener('click', () => {
+      if (currentIndex > 0) {
+        currentIndex -= 1;
+        webFrame.src = historyStack[currentIndex];
+        urlInput.value = historyStack[currentIndex];
+        updateNavButtons();
+      }
+    });
+
+    forwardBtn.addEventListener('click', () => {
+      if (currentIndex < historyStack.length - 1) {
+        currentIndex += 1;
+        webFrame.src = historyStack[currentIndex];
+        urlInput.value = historyStack[currentIndex];
+        updateNavButtons();
+      }
+    });
+
+    reloadBtn.addEventListener('click', () => {
+      // Reload the current frame
+      webFrame.contentWindow?.location?.reload?.();
+      // If blocked by cross-origin, reassign src
+      const cur = historyStack[currentIndex];
+      if (cur) webFrame.src = cur;
+    });
+
+    homeBtn.addEventListener('click', () => navigate(HOME));
+
+    // Initialize browser state
+    navigate(HOME);
+
+    // Notes app
+    function renderNotes() {
+      const items = JSON.parse(localStorage.getItem('copilotNotes') || '[]');
+      notesList.innerHTML = '';
+      items.forEach((txt, idx) => {
+        const row = document.createElement('div');
+        row.className = 'note-item';
+        const span = document.createElement('span');
+        span.textContent = txt;
+        const del = document.createElement('button');
+        del.className = 'btn';
+        del.textContent = 'Delete';
+        del.addEventListener('click', () => {
+          const next = JSON.parse(localStorage.getItem('copilotNotes') || '[]');
+          next.splice(idx, 1);
+          localStorage.setItem('copilotNotes', JSON.stringify(next));
+          renderNotes();
+        });
+        row.append(span, del);
+        notesList.appendChild(row);
+      });
+    }
+    renderNotes();
+
+    addNote.addEventListener('click', () => {
+      const txt = noteInput.value.trim();
+      if (!txt) return;
+      const items = JSON.parse(localStorage.getItem('copilotNotes') || '[]');
+      items.push(txt);
+      localStorage.setItem('copilotNotes', JSON.stringify(items));
+      noteInput.value = '';
+      renderNotes();
+    });
+
+    clearNotes.addEventListener('click', () => {
+      localStorage.removeItem('copilotNotes');
+      renderNotes();
+    });
+
+    // Start button easter action
+    const startBtn = document.getElementById('startBtn');
+    startBtn.addEventListener('click', () => {
+      // Toggle sidebar visibility (mini "start" effect)
+      const sidebar = document.querySelector('.sidebar');
+      const isHidden = window.getComputedStyle(sidebar).display === 'none';
+      sidebar.style.display = isHidden ? 'flex' : 'none';
+    });
+  </script>
+</body>
+</html>
